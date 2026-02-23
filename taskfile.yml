@@ -1,0 +1,101 @@
+version: "3"
+
+dotenv: [".env"]
+
+vars:
+  PROFILE: '{{.PROFILE | default "cpu"}}'
+  MODEL: '{{.MODEL | default "llama3.2"}}'
+
+tasks:
+  up:
+    desc: Start Ollama with a profile (default cpu, e.g. task up -- gpu-nvidia)
+    cmds:
+      - docker compose --profile {{.PROFILE}} up -d
+    vars:
+      PROFILE: '{{.CLI_ARGS | default .PROFILE}}'
+
+  up:gpu:
+    desc: Start Ollama with NVIDIA GPU acceleration
+    cmds:
+      - docker compose --profile gpu-nvidia up -d
+
+  up:cpu:
+    desc: Start Ollama with CPU only
+    cmds:
+      - docker compose --profile cpu up -d
+
+  down:
+    desc: Stop Ollama containers
+    cmds:
+      - docker compose --profile {{.PROFILE}} down
+    vars:
+      PROFILE: '{{.CLI_ARGS | default .PROFILE}}'
+
+  restart:
+    desc: Restart Ollama
+    cmds:
+      - task: down
+      - task: up
+
+  status:
+    desc: Show Ollama container status
+    cmds:
+      - docker compose ps
+      - echo ""
+      - 'echo "Ollama: http://localhost:11434"'
+
+  logs:
+    desc: Tail Ollama logs
+    cmds:
+      - docker compose logs -f {{.CLI_ARGS}}
+
+  health:
+    desc: Check Ollama health and list models
+    cmds:
+      - echo "=== Container Status ==="
+      - docker compose ps
+      - echo ""
+      - echo "=== Ollama API ==="
+      - curl -sf http://localhost:11434 || echo "UNREACHABLE"
+      - echo ""
+      - echo "=== Models ==="
+      - docker exec ollama ollama list 2>/dev/null || echo "Ollama container not running"
+
+  model:pull:
+    desc: Pull a model (e.g. task model:pull -- qwen3:8b)
+    cmds:
+      - docker exec -it ollama ollama pull {{.CLI_ARGS | default .MODEL}}
+
+  model:list:
+    desc: List downloaded models
+    cmds:
+      - docker exec ollama ollama list
+
+  model:test:
+    desc: Send a test prompt (e.g. task model:test -- "Hello world")
+    cmds:
+      - docker exec ollama ollama run {{.MODEL}} "{{.CLI_ARGS | default "Say hello in one sentence"}}"
+
+  gpu:setup:
+    desc: Configure NVIDIA Container Toolkit for Docker (requires sudo)
+    cmds:
+      - sudo nvidia-ctk runtime configure --runtime=docker
+      - sudo systemctl restart docker
+      - 'echo "NVIDIA runtime configured. Verify with: task gpu:test"'
+
+  gpu:test:
+    desc: Verify Docker can access the NVIDIA GPU
+    cmds:
+      - 'docker info | grep -i "runtimes"'
+      - nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv,noheader
+
+  network:create:
+    desc: Create the shared ollama-net Docker network
+    cmds:
+      - docker network create ollama-net 2>/dev/null || echo "Network ollama-net already exists"
+
+  clean:
+    desc: Stop containers and remove volumes (DESTROYS MODEL DATA)
+    prompt: This will delete all downloaded models. Continue?
+    cmds:
+      - docker compose --profile cpu --profile gpu-nvidia --profile gpu-amd down -v
