@@ -12,7 +12,7 @@ tasks:
     cmds:
       - docker compose --profile {{.PROFILE}} up -d
     vars:
-      PROFILE: '{{.CLI_ARGS | default .PROFILE}}'
+      PROFILE: "{{.CLI_ARGS | default .PROFILE}}"
 
   up:gpu:
     desc: Start Ollama with NVIDIA GPU acceleration
@@ -29,7 +29,7 @@ tasks:
     cmds:
       - docker compose --profile {{.PROFILE}} down
     vars:
-      PROFILE: '{{.CLI_ARGS | default .PROFILE}}'
+      PROFILE: "{{.CLI_ARGS | default .PROFILE}}"
 
   restart:
     desc: Restart Ollama
@@ -70,6 +70,13 @@ tasks:
     desc: List downloaded models
     cmds:
       - docker exec ollama ollama list
+
+  model:remove:
+    desc: Remove a downloaded model (e.g. task model:remove -- llama3.2)
+    cmds:
+      - docker exec ollama ollama rm {{.CLI_ARGS}}
+    requires:
+      vars: [CLI_ARGS]
 
   model:test:
     desc: Send a test prompt (e.g. task model:test -- "Hello world")

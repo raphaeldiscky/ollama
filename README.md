@@ -24,6 +24,23 @@ task up:gpu
 task up:cpu
 ```
 
+## Recommended models
+
+| Model | Size | VRAM | Notes |
+|-------|------|------|-------|
+| `llama3.2` | 3B | 2GB | Compact general-purpose (default) |
+| `llama3.1:8b` | 8B | 5GB | Strong general-purpose |
+| `qwen3:8b` | 8B | 5GB | Top benchmark scores 2025 |
+| `gemma3:4b` | 4B | 3GB | Google, fast inference |
+| `mistral:7b` | 7B | 4GB | Fast, good for grammar |
+| `phi4-mini` | 3.8B | 2GB | Microsoft, compact |
+
+Set in `.env` or pull directly:
+
+```bash
+task model:pull -- qwen3:8b
+```
+
 ## Profiles
 
 | Profile      | Command              | Description          |
