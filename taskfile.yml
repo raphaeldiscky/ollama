@@ -78,6 +78,15 @@ tasks:
     requires:
       vars: [CLI_ARGS]
 
+  model:status:
+    desc: Show running models and GPU/CPU usage
+    cmds:
+      - echo "=== Running Models ==="
+      - docker exec ollama ollama ps
+      - echo ""
+      - echo "=== GPU Usage ==="
+      - nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total --format=csv,noheader 2>/dev/null || echo "No NVIDIA GPU detected"
+
   model:test:
     desc: Send a test prompt (e.g. task model:test -- "Hello world")
     cmds:
